@@ -1,0 +1,10 @@
+export { default as Sun } from "./Sun";
+export { default as Moon } from "./Moon";
+export { default as Dots } from "./Dots";
+export { default as Home } from "./Home";
+export { default as Home2 } from "./Home2";
+export { default as Star } from "./Star";
+export { default as Stats } from "./Stats";
+export { default as Face } from "./Face";
+export { default as Menu } from "./Menu";
+export { default as Cross } from "./Cross";

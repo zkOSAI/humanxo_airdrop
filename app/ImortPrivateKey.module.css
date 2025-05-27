@@ -1,0 +1,127 @@
+/* ImportPrivateKey.module.css */
+.button {
+    max-width: 85%;
+    background-color: white;
+    color: #f97316;
+    /* orange-500 */
+    font-size: 1.5rem;
+    border: 1px solid #e5e7eb;
+    font-weight: 500;
+    padding: 0.7rem 1.5rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s;
+    margin-top: 0.5rem;
+}
+
+.button:hover {
+    background-color: #f9fafb;
+}
+
+.inputContainer {
+    max-width: 75%;
+}
+
+.input {
+    display: flex;
+    flex: 1;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    background-color: #fff;
+    color: #111827;
+    /* text-gray-900 */
+    border: none;
+    /* remove border */
+    outline: none;
+    border-radius: 0.375rem;
+    flex-direction: row;
+    align-items: center;
+}
+
+.input:focus {
+    box-shadow: 0 0 0 2px #fff;
+}
+
+.inputField {
+    outline: none;
+    border: none;
+}
+
+.submitBtn {
+    background-image: url('/img/enter.png');
+    background-size: 200% 200%;
+    /* Makes image cover entire button */
+    background-repeat: no-repeat;
+    /* Prevents tiling */
+    background-position: center;
+    /* Center the image */
+    flex: 1;
+    background-color: white;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.75rem 0.75rem;
+    border: none;
+    transition: background-color 0.2s;
+}
+
+/* .submitBtn:hover {
+  background-color: #ea580c;
+} */
+
+.cancelBtn {
+    flex: 1;
+    background-color: #e5e7eb;
+    color: #1f2937;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s;
+}
+
+.cancelBtn:hover {
+    background-color: #d1d5db;
+}
+
+.error {
+    color: #ef4444;
+    font-size: 1.25rem;
+    margin-top: 0.25rem;
+}
+
+.keyDisplay {
+    max-width: 75%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.keyText {
+    display: flex;
+    background-color: white;
+    color: #1f2937;
+    font-size: 1.3rem;
+    border: 1px solid #e5e7eb;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.375rem;
+    flex-grow: 1;
+}
+
+.editBtn {
+    background-color: #e5e7eb;
+    color: #1f2937;
+    font-size: 0.75rem;
+    padding: 0.25rem;
+    border-radius: 0.375rem;
+}
+
+.editBtn:hover {
+    background-color: #d1d5db;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
