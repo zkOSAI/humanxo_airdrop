@@ -1,27 +1,62 @@
 'use client';
 
 import * as React from 'react';
-import { Connector, useAccount, useConnect, useDisconnect } from 'wagmi';
+import { Connector, useAccount, useConnect, useDisconnect, useWalletClient } from 'wagmi';
 import styles from "../page.module.css";
 import cn from "classnames";
+import { BrowserProvider, JsonRpcSigner } from 'ethers';
 import { useSignature } from '../context/signContext';
-import { verifySolana } from '../api/verifySolana';
+import { verifyAndClaim } from '../api/verifySolana';
 // Remove Solana wallet import if you're only using Ethereum
 import { useWallet } from '@solana/wallet-adapter-react';
+import { useAirdrop } from '../context/airdropContext';
+
+// Custom hook to convert wagmi wallet client to ethers signer
+function useEthersSigner() {
+    const { data: walletClient } = useWalletClient();
+
+    return React.useMemo(() => {
+        if (!walletClient) return null;
+
+        const provider = new BrowserProvider(walletClient.transport);
+        return provider.getSigner();
+    }, [walletClient]);
+}
+
 
 export function WhiteWalletOptions() {
     const { connectors, connect, status } = useConnect();
-    const { disconnect } = useDisconnect();
     const { isConnected, address } = useAccount();
     const { signature, setSignature } = useSignature();
-
+    const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS!;
+    const { data: walletClient } = useWalletClient();
+    const [ethersSigner, setEthersSigner] = React.useState<JsonRpcSigner | null>(null);
     // If you need Solana functionality, handle it separately
     const { publicKey, signMessage } = useWallet();
+    const { airdrop, setAirdrop } = useAirdrop();
+    const signer = useEthersSigner();
+    // Convert the promise-based signer to state
     React.useEffect(() => {
-        if (signature && address && publicKey) {
-            verifySolana(publicKey, address, signature);
+        if (signer) {
+            signer.then(setEthersSigner).catch(console.error);
+        } else {
+            setEthersSigner(null);
         }
-    }, [signature, address, publicKey]);
+    }, [signer]);
+   React.useEffect(() => {
+  if (signature && address && publicKey && ethersSigner) {
+    (async () => {
+      const result = await verifyAndClaim(publicKey, address, signature, contractAddress, ethersSigner);
+      if (result.success && result.amount) {
+        console.log("🚀 ~ result.amount:", result.amount)
+        console.log(result.amount);
+        setAirdrop(result.amount); // 💥 Save the amount claimed to context
+      } else {
+        console.error("Claim failed:", result.error);
+      }
+    })();
+  }
+}, [signature, address, publicKey, ethersSigner]);
     if (isConnected) {
         return (
             <>

@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
-import Image from "next/image";
 import cn from "classnames";
 
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -14,24 +12,41 @@ import { useUsers } from "./queries/useUsers";
 
 import { WhiteWalletOptions } from './component/WhiteWalletOptions';
 
-import { useMobileMenu } from "./context/mobileContext";
-import { useAccount } from "wagmi";
+import { useAccount, useWalletClient } from "wagmi";
 import { useSignature } from "./context/signContext";
+import { useAirdrop } from "./context/airdropContext";
+import { BrowserProvider, JsonRpcSigner } from 'ethers';
+import VestingClaimComponent from "./component/display";
+
 //import ConnectWallet from "./component/redWallet";
+
+function useEthersSigner() {
+  const { data: walletClient } = useWalletClient();
+
+  return React.useMemo(() => {
+    if (!walletClient) return null;
+
+    const provider = new BrowserProvider(walletClient.transport);
+    return provider.getSigner();
+  }, [walletClient]);
+}
 
 
 export default function HomePage() {
-  const { publicKey, disconnect, connected, connecting, signMessage } = useWallet();
-
+  const { disconnect, connected, connecting, signMessage } = useWallet();
   const { setVisible } = useWalletModal();
 
   // const [connectedWallet, setConnectedWallet] = React.useState(false);
   //const { setMobileMenu } = useMobileMenu();
   const { isConnected, address } = useAccount();
 
- // const data = useUsers();
- const { setSignature} = useSignature();
+  // const data = useUsers();
+  const { signature, setSignature } = useSignature();
 
+  const { airdrop } = useAirdrop();
+  const { publicKey } = useWallet();
+  const [ethersSigner, setEthersSigner] = React.useState<JsonRpcSigner | null>(null);
+    const signer = useEthersSigner();
 
   const signEthAddress = async () => {
     if (address && signMessage) { // Check if signMessage exists
@@ -59,6 +74,14 @@ export default function HomePage() {
       }
     }
   }
+
+  React.useEffect(() => {
+    if (signer) {
+      signer.then(setEthersSigner).catch(console.error);
+    } else {
+      setEthersSigner(null);
+    }
+  }, [signer]);
 
   React.useEffect(() => {
     if (isConnected && address) {
@@ -125,10 +148,16 @@ export default function HomePage() {
                     </div>
 
                     <p className={styles.welcomeBlockText}>
-                      <b className={styles.welcomeBlockText}> 1000</b> ZKOS
+                      <b className={styles.welcomeBlockText}> {airdrop}</b> ZKOS
                     </p>
 
-
+                    {/* <VestingClaimComponent
+                      publicKey={publicKey}
+                      address={address}
+                      signature={signature}
+                      contractAddress={process.env.CONTRACT_ADDRESS!} // Your vesting contract address
+                      signer={ethersSigner!}
+                    /> */}
                     <WhiteWalletOptions />
                   </div>
                 </div>
@@ -141,14 +170,14 @@ export default function HomePage() {
                     Next claim will be available soon.
                   </p>
                   <p className={styles.welcomeExtensionText}>
-                    <b>1000</b> ZKOS
+                    <b>{airdrop}</b> ZKOS
                   </p>
 
                   <button
                     className={cn(styles.button, styles.downloadExtension)}
-                   
+
                   >
-                  06:12:35:46
+                    06:12:35:46
                   </button>
                 </div>
               </div>
@@ -171,7 +200,7 @@ export default function HomePage() {
                   zkOS Airdrop
                 </p>
                 <p className={styles.dashboardInfoEarned}>
-                  Connect your wallet to see if you're <br />
+                  Connect your wallet to see if you&rsquo;re <br />
                   eligible for the ZKOS Ethereum airdrop
                 </p>
 

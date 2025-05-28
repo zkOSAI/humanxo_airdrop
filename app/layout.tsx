@@ -12,6 +12,8 @@ import MobileMenuProvider from "./providers/MobileProvider";
 import ThemeToggleMenuProvider from "./providers/ThemeProvider";
 import WalletContextProvider from "./providers/WalletContextProvider";
 import SignatureProvider from "./providers/SignatureProvider";
+import { AirdropProvider } from "./context/airdropContext";
+import AirdropAmountProvider from "./providers/AirdropProvider";
 
 export const metadata: Metadata = {
   title: "HumanXO Airdrop",
@@ -31,6 +33,7 @@ export default function RootLayout({
               <WalletContextProvider>
                 <ThemeToggleMenuProvider>
                   <SignatureProvider>
+                    <AirdropAmountProvider>
                     <div className={styles.content}>
 
                       {children}
@@ -47,6 +50,7 @@ export default function RootLayout({
                       pauseOnHover
                       theme="colored"
                     />
+                    </AirdropAmountProvider>
                   </SignatureProvider>
                 </ThemeToggleMenuProvider>
               </WalletContextProvider>
