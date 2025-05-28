@@ -47,14 +47,18 @@ const VestingClaimComponent: React.FC<VestingClaimComponentProps> = ({
 
     try {
       const result = await getClaimableAmount(address, claimData, contractAddress, signer);
-      
+
       if (result.success && result.claimableInfo) {
         setClaimableInfo(result.claimableInfo);
       } else {
         setError(result.error || 'Failed to get claimable amount');
       }
-    } catch (err: any) {
-      setError(err.message || 'Unknown error occurred');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Unknown error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -72,22 +76,32 @@ const VestingClaimComponent: React.FC<VestingClaimComponentProps> = ({
 
     try {
       const result = await verifySolana(publicKey, address, signature);
-      
+
       if (result.success && result.claimData) {
         setClaimData(result.claimData);
+
         // Auto-fetch claimable amount after verification
         const claimableResult = await getClaimableAmount(address, result.claimData, contractAddress, signer);
+
         if (claimableResult.success && claimableResult.claimableInfo) {
           setClaimableInfo(claimableResult.claimableInfo);
+        } else {
+          setError(claimableResult.error || 'Failed to get claimable amount');
         }
+
       } else {
         setError(result.error || 'Verification failed');
       }
-    } catch (err: any) {
-      setError(err.message || 'Verification failed');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || 'Verification failed');
+      } else {
+        setError('Verification failed');
+      }
     } finally {
       setLoading(false);
     }
+
   };
 
   // Function to claim tokens
@@ -103,7 +117,7 @@ const VestingClaimComponent: React.FC<VestingClaimComponentProps> = ({
 
     try {
       const result = await verifyAndClaim(publicKey, address, signature, contractAddress, signer);
-      
+
       if (result.success) {
         setTxHash(result.txHash || null);
         // Refresh claimable amount after successful claim
@@ -111,11 +125,16 @@ const VestingClaimComponent: React.FC<VestingClaimComponentProps> = ({
       } else {
         setError(result.error || 'Claim failed');
       }
-    } catch (err: any) {
-      setError(err.message || 'Claim failed');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || 'Claim failed');
+      } else {
+        setError('Claim failed');
+      }
     } finally {
       setClaiming(false);
     }
+
   };
 
   // Auto-refresh claimable amount every 30 seconds
@@ -129,7 +148,7 @@ const VestingClaimComponent: React.FC<VestingClaimComponentProps> = ({
   return (
     <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg">
       <h2 className="text-2xl font-bold mb-6 text-center">Token Vesting Claim</h2>
-      
+
       {/* Verification Section */}
       {!claimData && (
         <div className="mb-6">
@@ -147,7 +166,7 @@ const VestingClaimComponent: React.FC<VestingClaimComponentProps> = ({
       {claimableInfo && (
         <div className="mb-6 p-4 bg-gray-50 rounded-lg">
           <h3 className="text-lg font-semibold mb-3">Vesting Information</h3>
-          
+
           <div className="space-y-2">
             <div className="flex justify-between">
               <span className="text-gray-600">Available to Claim:</span>
@@ -155,14 +174,14 @@ const VestingClaimComponent: React.FC<VestingClaimComponentProps> = ({
                 {parseFloat(claimableInfo.claimableNow).toFixed(4)} tokens
               </span>
             </div>
-            
+
             <div className="flex justify-between">
               <span className="text-gray-600">Total Claimed:</span>
               <span className="font-medium">
                 {parseFloat(claimableInfo.totalClaimed).toFixed(4)} tokens
               </span>
             </div>
-            
+
             <div className="flex justify-between">
               <span className="text-gray-600">Total Available:</span>
               <span className="font-medium">
@@ -180,8 +199,8 @@ const VestingClaimComponent: React.FC<VestingClaimComponentProps> = ({
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full" 
+              <div
+                className="bg-blue-600 h-2 rounded-full"
                 style={{
                   width: `${(parseFloat(claimableInfo.totalClaimed) / parseFloat(claimableInfo.totalAvailable)) * 100}%`
                 }}

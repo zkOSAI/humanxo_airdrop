@@ -17,7 +17,7 @@ interface ClaimData {
   signature: string;
 }
 
-interface ClaimableAmountInfo {
+export interface ClaimableAmountInfo {
   claimableNow: string;
   totalClaimed: string;
   totalAvailable: string;
@@ -44,6 +44,7 @@ interface VerifyResponse {
 
 // Add callback type for claim info updates
 type ClaimInfoCallback = (claimInfo: ClaimableAmountInfo) => void;
+
 export const verifySolana = async (
   publicKey: PublicKey | null,
   address: `0x${string}` | undefined,
@@ -96,11 +97,11 @@ export const verifySolana = async (
       };
     }
 
-  } catch (err: any) {
+  } catch (err) {
     console.error("❌ Error in verifySolana:", err);
     return {
       success: false,
-      error: err.response?.data?.message || err.message || "Unknown error"
+      error: "Unknown error"
     };
   }
 };
@@ -109,7 +110,8 @@ export const getClaimableAmount = async (
   address: `0x${string}` | undefined,
   claimData: ClaimData,
   contractAddress: string,
-  signer: ethers.Signer
+  signer: ethers.Signer,
+  onClaimInfoUpdate?: ClaimInfoCallback
 ): Promise<{ success: boolean; claimableInfo?: ClaimableAmountInfo; error?: string }> => {
   try {
     console.log("🔍 Getting claimable amount...");
@@ -137,16 +139,21 @@ export const getClaimableAmount = async (
 
     console.log("📊 Claimable info:", claimableInfo);
 
+    // Call the callback if provided
+    if (onClaimInfoUpdate) {
+      onClaimInfoUpdate(claimableInfo);
+    }
+
     return {
       success: true,
       claimableInfo
     };
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("❌ Error getting claimable amount:", error);
     return {
       success: false,
-      error: error.message || "Failed to get claimable amount"
+      error: "Failed to get claimable amount"
     };
   }
 };
@@ -158,9 +165,10 @@ export const claimVestingTokens = async (
   address: `0x${string}` | undefined,
   claimData: ClaimData,
   contractAddress: string,
-  signer: ethers.Signer
+  signer: ethers.Signer,
+  onClaimInfoUpdate?: ClaimInfoCallback
 ): Promise<{ success: boolean; txHash?: string; error?: string; amount?: string }> => {
-  let amount:  string = "";
+  let amount: string = "";
   try {
     console.log("provider================", signer.provider);
     console.log("signer=====", signer);
@@ -195,7 +203,7 @@ export const claimVestingTokens = async (
       // Continue anyway - let the contract handle verification
     }
 
-    // Check claimable amount
+    // Check claimable amount BEFORE claiming
     try {
       const [claimableNow, totalClaimed, totalAvailable] = await contract.getClaimableAmount(
         userAddress,
@@ -203,11 +211,22 @@ export const claimVestingTokens = async (
         claimData.nonce,
         claimData.deadline
       );
-      amount = ethers.formatEther(claimableNow);
-      console.log("📊 Claimable info:");
-      console.log("   Available now:", ethers.formatEther(claimableNow));
-      console.log("   Total claimed:", ethers.formatEther(totalClaimed));
-      console.log("   Total available:", ethers.formatEther(totalAvailable));
+      
+      const claimableInfo: ClaimableAmountInfo = {
+        claimableNow: ethers.formatEther(claimableNow),
+        totalClaimed: ethers.formatEther(totalClaimed),
+        totalAvailable: ethers.formatEther(totalAvailable)
+      };
+
+      console.log("📊 Claimable info BEFORE claiming:");
+      console.log("   Available now:", claimableInfo.claimableNow);
+      console.log("   Total claimed:", claimableInfo.totalClaimed);
+      console.log("   Total available:", claimableInfo.totalAvailable);
+
+      // Call the callback with BEFORE claim info
+      if (onClaimInfoUpdate) {
+        onClaimInfoUpdate(claimableInfo);
+      }
 
       if (claimableNow.toString() === "0") {
         throw new Error("No tokens available to claim at this time");
@@ -232,37 +251,57 @@ export const claimVestingTokens = async (
     // Wait for confirmation
     const receipt = await tx.wait();
     console.log("✅ Transaction confirmed:", receipt.transactionHash);
-    const [claimableNow, totalClaimed, totalAvailable] = await contract.getClaimableAmount(
+    
+    // Get updated claimable amount AFTER claiming
+    const [claimableNowAfter, totalClaimedAfter, totalAvailableAfter] = await contract.getClaimableAmount(
       userAddress,
       claimData.totalAmount,
       claimData.nonce,
       claimData.deadline
     );
-    amount = ethers.formatEther(claimableNow);
+    
+    amount = ethers.formatEther(claimableNowAfter);
+    
+    const updatedClaimableInfo: ClaimableAmountInfo = {
+      claimableNow: ethers.formatEther(claimableNowAfter),
+      totalClaimed: ethers.formatEther(totalClaimedAfter),
+      totalAvailable: ethers.formatEther(totalAvailableAfter)
+    };
+
+    console.log("📊 Updated claimable info AFTER claiming:");
+    console.log("   Available now:", updatedClaimableInfo.claimableNow);
+    console.log("   Total claimed:", updatedClaimableInfo.totalClaimed);
+    console.log("   Total available:", updatedClaimableInfo.totalAvailable);
+
+    // Call the callback with updated info
+    if (onClaimInfoUpdate) {
+      onClaimInfoUpdate(updatedClaimableInfo);
+    }
+
     return {
       success: true,
       txHash: receipt.transactionHash,
       amount
     };
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("❌ Error claiming tokens:", error);
 
     // Parse common error messages
-    let errorMessage = error.message;
-    if (error.message.includes("Vesting has not started yet")) {
-      errorMessage = "Vesting period has not started yet";
-    } else if (error.message.includes("No tokens available to claim")) {
-      errorMessage = "No tokens available to claim at this time";
-    } else if (error.message.includes("Invalid signature")) {
-      errorMessage = "Invalid authorization signature";
-    } else if (error.message.includes("Signature expired")) {
-      errorMessage = "Authorization signature has expired";
-    }
+    // let errorMessage = error.message;
+    // if (error.message.includes("Vesting has not started yet")) {
+    //   errorMessage = "Vesting period has not started yet";
+    // } else if (error.message.includes("No tokens available to claim")) {
+    //   errorMessage = "No tokens available to claim at this time";
+    // } else if (error.message.includes("Invalid signature")) {
+    //   errorMessage = "Invalid authorization signature";
+    // } else if (error.message.includes("Signature expired")) {
+    //   errorMessage = "Authorization signature has expired";
+    // }
 
     return {
       success: false,
-      error: errorMessage,
+      error: "Error",
       amount
     };
   }
@@ -276,7 +315,8 @@ export const verifyAndClaim = async (
   address: `0x${string}` | undefined,
   signature: Uint8Array<ArrayBufferLike> | null,
   contractAddress: string,
-  signer: ethers.Signer
+  signer: ethers.Signer,
+  onClaimInfoUpdate?: ClaimInfoCallback
 ): Promise<{ success: boolean; txHash?: string; error?: string; amount?: string }> => {
   try {
     // Step 1: Verify Solana signature and get claim data
@@ -300,17 +340,17 @@ export const verifyAndClaim = async (
       address,
       verifyResult.claimData,
       contractAddress,
-      signer
+      signer,
+      onClaimInfoUpdate // Pass the callback through
     );
-
 
     return claimResult;
 
-  } catch (error: any) {
+  } catch (error) {
     console.error("❌ Error in verifyAndClaim:", error);
     return {
       success: false,
-      error: error.message || "Unknown error occurred"
+      error: "Unknown error occurred"
     };
   }
 };

@@ -12,7 +12,6 @@ import MobileMenuProvider from "./providers/MobileProvider";
 import ThemeToggleMenuProvider from "./providers/ThemeProvider";
 import WalletContextProvider from "./providers/WalletContextProvider";
 import SignatureProvider from "./providers/SignatureProvider";
-import { AirdropProvider } from "./context/airdropContext";
 import AirdropAmountProvider from "./providers/AirdropProvider";
 
 export const metadata: Metadata = {
