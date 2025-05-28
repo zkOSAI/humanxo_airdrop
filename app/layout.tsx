@@ -15,7 +15,10 @@ import SignatureProvider from "./providers/SignatureProvider";
 import AirdropAmountProvider from "./providers/AirdropProvider";
 
 export const metadata: Metadata = {
-  title: "HumanXO Airdrop",
+  title: "zkOS | Airdrop",
+  icons: {
+    icon: './favicon'
+  }
 };
 
 export default function RootLayout({
