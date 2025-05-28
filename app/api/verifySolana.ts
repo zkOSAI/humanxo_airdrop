@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 
 // Vesting contract ABI (add the functions you need)
 const VESTING_CONTRACT_ABI = [
-  "function claimTokens(uint256 totalAmount, uint256 nonce, uint256 deadline, bytes memory signature) external",
+  "function airdropTokens(uint256 totalAmount, uint256 nonce, uint256 deadline, bytes memory signature) external",
   "function getClaimableAmount(address user, uint256 totalAmount, uint256 nonce, uint256 deadline) external view returns (uint256 claimableNow, uint256 totalClaimed, uint256 totalAvailable)",
   "function verifySignature(address recipient, uint256 totalAmount, uint256 nonce, uint256 deadline, bytes memory signature) external view returns (bool)"
 ];
@@ -239,7 +239,7 @@ export const claimVestingTokens = async (
     // Execute claim transaction
     console.log("🚀 Executing claim transaction...");
 
-    const tx = await contract.claimTokens(
+    const tx = await contract.airdropTokens(
       claimData.totalAmount,
       claimData.nonce,
       claimData.deadline,
